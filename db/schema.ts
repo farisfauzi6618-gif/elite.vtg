@@ -1,28 +1,61 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
-export const settings = sqliteTable("settings", {
- id: integer("id").primaryKey(), ownerId: text("owner_id"), merchant: text("merchant").notNull().default("ELITE.VTG"), qrisKey: text("qris_key"), qrisMime: text("qris_mime"), botCipher: text("bot_cipher"), botUsername: text("bot_username"), chatId: text("chat_id"), chatName: text("chat_name"), pairNonce: text("pair_nonce"), pairExpires: integer("pair_expires"), candidateId: text("candidate_id"), candidateName: text("candidate_name"), shippingCipher:text("shipping_cipher"), shippingConfig:text("shipping_config"), webhookCipher:text("webhook_cipher"), webhookActive:integer("webhook_active").notNull().default(0),
- kiriminCipher:text("kirimin_cipher"),kiriminConfig:text("kirimin_config"),kiriminPinCipher:text("kirimin_pin_cipher"),kiriminWebhookCipher:text("kirimin_webhook_cipher"),kiriminWebhookActive:integer("kirimin_webhook_active").notNull().default(0),
+import { sqliteTable, text, integer, real, index, uniqueIndex, check } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+export const products = sqliteTable('products', {
+ id:text('id').primaryKey(), shortcode:text('shortcode').notNull(), instagramUrl:text('instagram_url').notNull(),
+ name:text('name').notNull().default(''), brand:text('brand').notNull().default(''), category:text('category').notNull().default(''), color:text('color').notNull().default(''),
+ legacyCategory:text('legacy_category').notNull().default(''),featureIds:text('feature_ids').notNull().default('[]'),
+ price:integer('price'), condition:text('condition'), defects:text('defects'), photoKey:text('photo_key'), caption:text('caption').notNull().default(''), description:text('description').notNull().default(''), photoKeys:text('photo_keys').notNull().default('[]'),
+ warnings:text('warnings').notNull().default('[]'), reviewed:integer('reviewed').notNull().default(0), status:text('status').notNull().default('draft'),
+ createdAt:text('created_at').notNull(), updatedAt:text('updated_at').notNull(), publishedAt:text('published_at'), version:integer('version').notNull().default(0), lastMutation:text('last_mutation'),
+},t=>[uniqueIndex('idx_products_shortcode').on(t.shortcode),index('idx_products_status_published').on(t.status,t.publishedAt),check('product_price_valid',sql`${t.price} IS NULL OR (${t.price} >= 0 AND ${t.price} <= 1000000000)`),check('product_status_valid',sql`${t.status} IN ('draft','published')`)]);
+export const sizeGroups=sqliteTable('size_groups',{
+ id:text('id').primaryKey(),productId:text('product_id').notNull().references(()=>products.id),label:text('label').notNull().default(''),tagSize:text('tag_size').notNull().default(''),
+ fits:text('fits').notNull().default('[]'),lengthCm:real('length_cm'),widthCm:real('width_cm'),qty:integer('qty'),price:integer('price'),condition:text('condition'),defects:text('defects'),
+ revision:integer('revision').notNull().default(0),sortOrder:integer('sort_order').notNull().default(0),
+},t=>[index('idx_groups_product').on(t.productId),check('group_qty_valid',sql`${t.qty} IS NULL OR (typeof(${t.qty}) = 'integer' AND ${t.qty} >= 0 AND ${t.qty} <= 100000)`),check('group_price_valid',sql`${t.price} IS NULL OR (${t.price} >= 0 AND ${t.price} <= 1000000000)`)]);
+export const stockHistory=sqliteTable('stock_history',{
+ id:text('id').primaryKey(),groupId:text('group_id').notNull().references(()=>sizeGroups.id),productId:text('product_id').notNull().references(()=>products.id),
+ beforeQty:integer('before_qty'),afterQty:integer('after_qty'),beforeRevision:integer('before_revision').notNull(),afterRevision:integer('after_revision').notNull(),
+ reason:text('reason').notNull(),actor:text('actor').notNull(),createdAt:text('created_at').notNull(),undoOf:text('undo_of'),
+},t=>[index('idx_history_product_time').on(t.productId,t.createdAt),uniqueIndex('idx_history_undo').on(t.undoOf)]);
+export const photos=sqliteTable('photos',{
+ key:text('key').primaryKey(),contentType:text('content_type').notNull(),size:integer('size').notNull(),source:text('source').notNull(),createdAt:text('created_at').notNull(),
 });
-export const orders = sqliteTable("orders", {
- id: text("id").primaryKey(), sessionHash: text("session_hash").notNull(), createdAt: integer("created_at").notNull(), name: text("name").notNull(), phone: text("phone").notNull(), address: text("address").notNull(), postcode: text("postcode").notNull(), item: text("item").notNull(), total: integer("total").notNull(), itemAmount: integer("item_amount"), shippingAmount: integer("shipping_amount"), shippingJson: text("shipping_json"), status: text("status").notNull().default("awaiting_proof"), proofKey: text("proof_key"), proofMime: text("proof_mime"), notifyStatus: text("notify_status").notNull().default("pending"), invoiceMessage: text("invoice_message"), proofMessage: text("proof_message"), recipientMessage: text("recipient_message"), notifyLease: integer("notify_lease").notNull().default(0), deliveryChat: text("delivery_chat"),
- paymentMethod:text("payment_method",{enum:["bca_transfer","qris_dana"]}).notNull().default("qris_dana"),paymentState:text("payment_state").notNull().default("awaiting_proof"),confirmedAt:integer("confirmed_at"),confirmedBy:text("confirmed_by"),quantity:integer("quantity").notNull().default(1),itemsJson:text("items_json"),
- catalogCheckoutId:text('catalog_checkout_id'),catalogToken:text('catalog_token'),catalogItemsJson:text('catalog_items_json'),stockSyncState:text('stock_sync_state').notNull().default('unlinked'),stockSyncError:text('stock_sync_error'),
-}, t=>[index("idx_orders_created").on(t.createdAt),index("idx_orders_session").on(t.sessionHash),uniqueIndex('idx_order_catalog_checkout').on(t.catalogCheckoutId)]);
-export const limits = sqliteTable("limits", { key: text("key").primaryKey(), count: integer("count").notNull(), expires: integer("expires").notNull() });
+export const importAttempts=sqliteTable('import_attempts',{
+ id:text('id').primaryKey(),instagramUrl:text('instagram_url').notNull(),source:text('source').notNull(),captionStatus:text('caption_status').notNull(),photoStatus:text('photo_status').notNull(),
+ parseStatus:text('parse_status').notNull(),message:text('message').notNull(),createdAt:text('created_at').notNull(),
+},t=>[index('idx_imports_time').on(t.createdAt)]);
+export const customers=sqliteTable('customers',{
+ id:text('id').primaryKey(),name:text('name').notNull(),identity:text('identity').notNull(),email:text('email'),phone:text('phone'),birthday:text('birthday'),passwordHash:text('password_hash').notNull(),createdAt:integer('created_at').notNull(),
+},t=>[uniqueIndex('idx_customer_identity').on(t.identity)]);
+export const customerSessions=sqliteTable('customer_sessions',{
+ hash:text('hash').primaryKey(),customerId:text('customer_id').notNull().references(()=>customers.id),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),
+},t=>[index('idx_customer_session_expiry').on(t.expiresAt)]);
+export const catalogCheckouts=sqliteTable('catalog_checkouts',{
+ id:text('id').primaryKey(),tokenHash:text('token_hash').notNull(),linesJson:text('lines_json').notNull(),amount:integer('amount').notNull(),expiresAt:integer('expires_at').notNull(),createdAt:integer('created_at').notNull(),customerId:text('customer_id').references(()=>customers.id),
+},t=>[uniqueIndex('idx_catalog_checkout_token').on(t.tokenHash)]);
+export const catalogSales=sqliteTable('catalog_sales',{
+ orderId:text('order_id').primaryKey(),checkoutId:text('checkout_id').notNull().references(()=>catalogCheckouts.id),marker:text('marker').notNull(),createdAt:text('created_at').notNull(),
+},t=>[uniqueIndex('idx_catalog_sale_checkout').on(t.checkoutId)]);
 
-export const shippingLocations = sqliteTable("shipping_locations", {id:integer("id").primaryKey(),payload:text("payload").notNull(),expiresAt:integer("expires_at").notNull()});
-export const shippingQuotes = sqliteTable("shipping_quotes", {id:text("id").primaryKey(),payload:text("payload").notNull(),expiresAt:integer("expires_at").notNull()},t=>[index("idx_shipping_quotes_expires").on(t.expiresAt)]);
+export const requestLimits=sqliteTable('request_limits',{
+ key:text('key').primaryKey(),count:integer('count').notNull(),expiresAt:integer('expires_at').notNull(),
+},t=>[index('idx_request_limits_expires').on(t.expiresAt)]);
 
-export const shipments=sqliteTable("shipments",{
- orderId:text("order_id").primaryKey().references(()=>orders.id), state:text("state").notNull().default("payment_confirmed"),lease:integer("lease").notNull().default(0), environment:text("environment"),configJson:text("config_json"),weightGrams:integer("weight_grams"),maxCost:integer("max_cost"),destinationJson:text("destination_json"),requestJson:text("request_json"),createSentAt:integer("create_sent_at"),providerId:text("provider_id"),providerNo:text("provider_no"),awb:text("awb"),pickupState:text("pickup_state").notNull().default("pending"),pickupJson:text("pickup_json"),labelPdf:text("label_pdf"),labelPng:text("label_png"),pdfMessage:text("pdf_message"),pngMessage:text("png_message"),summaryMessage:text("summary_message"),lastError:text("last_error"),insuranceState:text("insurance_state").notNull().default("unverified"),insuredValue:integer("insured_value"),insuranceFee:real("insurance_fee"),updatedAt:integer("updated_at").notNull(),
- provider:text("provider"),
-},t=>[uniqueIndex("idx_shipments_provider_no").on(t.providerNo)]);
-export const telegramReceipts=sqliteTable("telegram_receipts",{updateId:integer("update_id").primaryKey(),state:text("state").notNull(),lease:integer("lease").notNull(),createdAt:integer("created_at").notNull()});
-export const trackingLinks=sqliteTable("tracking_links",{
- orderId:text("order_id").primaryKey().references(()=>orders.id),tokenHash:text("token_hash").notNull(),tokenCipher:text("token_cipher").notNull(),expiresAt:integer("expires_at").notNull(),createdAt:integer("created_at").notNull(),
-},t=>[uniqueIndex("idx_tracking_links_token_hash").on(t.tokenHash)]);
-export const shipmentTracking=sqliteTable("shipment_tracking",{
- orderId:text("order_id").primaryKey().references(()=>orders.id),awb:text("awb").notNull(),payload:text("payload"),checkedAt:integer("checked_at"),nextAttemptAt:integer("next_attempt_at").notNull().default(0),lease:integer("lease").notNull().default(0),lastError:text("last_error"),
-});
+export const adminAccess=sqliteTable('admin_access',{
+ id:integer('id').primaryKey(),userId:text('user_id').notNull(),createdAt:text('created_at').notNull(),
+},t=>[check('admin_access_single_owner',sql`${t.id} = 1`)]);
 
-export const kiriminSearchCache=sqliteTable("kirimin_search_cache",{key:text("key").primaryKey(),payload:text("payload").notNull(),expiresAt:integer("expires_at").notNull()});
+export const teamAccess=sqliteTable('team_access',{
+ id:text('id').primaryKey(),slot:integer('slot').notNull(),name:text('name').notNull(),tokenHash:text('token_hash').notNull(),tokenCipher:text('token_cipher').notNull(),active:integer('active').notNull().default(1),version:integer('version').notNull().default(0),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),
+},t=>[uniqueIndex('idx_team_slot').on(t.slot),uniqueIndex('idx_team_token').on(t.tokenHash),check('team_slot_valid',sql`${t.slot} BETWEEN 1 AND 3`),check('team_active_valid',sql`${t.active} IN (0,1)`)]);
+export const teamSessions=sqliteTable('team_sessions',{
+ hash:text('hash').primaryKey(),accessId:text('access_id').notNull().references(()=>teamAccess.id),version:integer('version').notNull(),createdAt:integer('created_at').notNull(),expiresAt:integer('expires_at').notNull(),
+},t=>[index('idx_team_session_access').on(t.accessId),index('idx_team_session_expiry').on(t.expiresAt)]);
+
+export const catalogFeatures=sqliteTable('catalog_features',{
+ id:text('id').primaryKey(),label:text('label').notNull(),groupId:text('group_id').notNull(),sortOrder:integer('sort_order').notNull().default(0),
+},t=>[check('feature_group_valid',sql`${t.groupId} IN ('opening','knit','sleeve','style')`)]);
+export const featureAliases=sqliteTable('feature_aliases',{
+ aliasKey:text('alias_key').primaryKey(),featureId:text('feature_id').notNull().references(()=>catalogFeatures.id),value:text('value').notNull(),
+},t=>[index('idx_feature_alias_term').on(t.featureId)]);

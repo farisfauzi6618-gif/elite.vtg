@@ -1,42 +1,11 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "9ca4063c-6e49-42d9-9ee2-5ff03dcff3d9",
-  "prevId": "8a8fb5d7-356b-41ad-8f0e-8ba7b5a2ff8f",
+  "id": "24deeb2a-541a-42dd-bee5-6952317f4998",
+  "prevId": "70ed0466-766e-4f5f-a04a-c68c53329031",
   "tables": {
-    "limits": {
-      "name": "limits",
-      "columns": {
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "count": {
-          "name": "count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "expires": {
-          "name": "expires",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "orders": {
-      "name": "orders",
+    "catalog_checkouts": {
+      "name": "catalog_checkouts",
       "columns": {
         "id": {
           "name": "id",
@@ -45,9 +14,30 @@
           "notNull": true,
           "autoincrement": false
         },
-        "session_hash": {
-          "name": "session_hash",
+        "token_hash": {
+          "name": "token_hash",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lines_json": {
+          "name": "lines_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -58,69 +48,324 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_catalog_checkout_token": {
+          "name": "idx_catalog_checkout_token",
+          "columns": [
+            "token_hash"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "catalog_sales": {
+      "name": "catalog_sales",
+      "columns": {
+        "order_id": {
+          "name": "order_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "checkout_id": {
+          "name": "checkout_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "marker": {
+          "name": "marker",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_catalog_sale_checkout": {
+          "name": "idx_catalog_sale_checkout",
+          "columns": [
+            "checkout_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "catalog_sales_checkout_id_catalog_checkouts_id_fk": {
+          "name": "catalog_sales_checkout_id_catalog_checkouts_id_fk",
+          "tableFrom": "catalog_sales",
+          "tableTo": "catalog_checkouts",
+          "columnsFrom": [
+            "checkout_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "import_attempts": {
+      "name": "import_attempts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "instagram_url": {
+          "name": "instagram_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "caption_status": {
+          "name": "caption_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "photo_status": {
+          "name": "photo_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "parse_status": {
+          "name": "parse_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_imports_time": {
+          "name": "idx_imports_time",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "photos": {
+      "name": "photos",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size": {
+          "name": "size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "products": {
+      "name": "products",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "shortcode": {
+          "name": "shortcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "instagram_url": {
+          "name": "instagram_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "name": {
           "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
-        "phone": {
-          "name": "phone",
+        "brand": {
+          "name": "brand",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
-        "address": {
-          "name": "address",
+        "category": {
+          "name": "category",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
-        "postcode": {
-          "name": "postcode",
+        "color": {
+          "name": "color",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "''"
         },
-        "item": {
-          "name": "item",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "total": {
-          "name": "total",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "item_amount": {
-          "name": "item_amount",
+        "price": {
+          "name": "price",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "shipping_amount": {
-          "name": "shipping_amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "shipping_json": {
-          "name": "shipping_json",
+        "condition": {
+          "name": "condition",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "defects": {
+          "name": "defects",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "photo_key": {
+          "name": "photo_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "caption": {
+          "name": "caption",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "photo_keys": {
+          "name": "photo_keys",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "warnings": {
+          "name": "warnings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "reviewed": {
+          "name": "reviewed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         },
         "status": {
           "name": "status",
@@ -128,54 +373,39 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'awaiting_proof'"
+          "default": "'draft'"
         },
-        "proof_key": {
-          "name": "proof_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "proof_mime": {
-          "name": "proof_mime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notify_status": {
-          "name": "notify_status",
+        "created_at": {
+          "name": "created_at",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'pending'"
+          "autoincrement": false
         },
-        "invoice_message": {
-          "name": "invoice_message",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "published_at": {
+          "name": "published_at",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "proof_message": {
-          "name": "proof_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notify_lease": {
-          "name": "notify_lease",
+        "version": {
+          "name": "version",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": 0
         },
-        "delivery_chat": {
-          "name": "delivery_chat",
+        "last_mutation": {
+          "name": "last_mutation",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -183,17 +413,18 @@
         }
       },
       "indexes": {
-        "idx_orders_created": {
-          "name": "idx_orders_created",
+        "idx_products_shortcode": {
+          "name": "idx_products_shortcode",
           "columns": [
-            "created_at"
+            "shortcode"
           ],
-          "isUnique": false
+          "isUnique": true
         },
-        "idx_orders_session": {
-          "name": "idx_orders_session",
+        "idx_products_status_published": {
+          "name": "idx_products_status_published",
           "columns": [
-            "session_hash"
+            "status",
+            "published_at"
           ],
           "isUnique": false
         }
@@ -201,176 +432,280 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "product_price_valid": {
+          "name": "product_price_valid",
+          "value": "\"products\".\"price\" IS NULL OR (\"products\".\"price\" >= 0 AND \"products\".\"price\" <= 1000000000)"
+        },
+        "product_status_valid": {
+          "name": "product_status_valid",
+          "value": "\"products\".\"status\" IN ('draft','published')"
+        }
+      }
     },
-    "settings": {
-      "name": "settings",
+    "size_groups": {
+      "name": "size_groups",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
         },
-        "owner_id": {
-          "name": "owner_id",
+        "product_id": {
+          "name": "product_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "merchant": {
-          "name": "merchant",
+        "label": {
+          "name": "label",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'ELITE.VTG'"
+          "default": "''"
         },
-        "qris_key": {
-          "name": "qris_key",
+        "tag_size": {
+          "name": "tag_size",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "fits": {
+          "name": "fits",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "length_cm": {
+          "name": "length_cm",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "qris_mime": {
-          "name": "qris_mime",
-          "type": "text",
+        "width_cm": {
+          "name": "width_cm",
+          "type": "real",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "bot_cipher": {
-          "name": "bot_cipher",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "bot_username": {
-          "name": "bot_username",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "chat_id": {
-          "name": "chat_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "chat_name": {
-          "name": "chat_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "pair_nonce": {
-          "name": "pair_nonce",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "pair_expires": {
-          "name": "pair_expires",
+        "qty": {
+          "name": "qty",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "candidate_id": {
-          "name": "candidate_id",
+        "price": {
+          "name": "price",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "condition": {
+          "name": "condition",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "candidate_name": {
-          "name": "candidate_name",
+        "defects": {
+          "name": "defects",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "shipping_locations": {
-      "name": "shipping_locations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
         },
-        "payload": {
-          "name": "payload",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "expires_at": {
-          "name": "expires_at",
+        "revision": {
+          "name": "revision",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "shipping_quotes": {
-      "name": "shipping_quotes",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": 0
         },
-        "payload": {
-          "name": "payload",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "expires_at": {
-          "name": "expires_at",
+        "sort_order": {
+          "name": "sort_order",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {
-        "idx_shipping_quotes_expires": {
-          "name": "idx_shipping_quotes_expires",
+        "idx_groups_product": {
+          "name": "idx_groups_product",
           "columns": [
-            "expires_at"
+            "product_id"
           ],
           "isUnique": false
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "size_groups_product_id_products_id_fk": {
+          "name": "size_groups_product_id_products_id_fk",
+          "tableFrom": "size_groups",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "group_qty_valid": {
+          "name": "group_qty_valid",
+          "value": "\"size_groups\".\"qty\" IS NULL OR (typeof(\"size_groups\".\"qty\") = 'integer' AND \"size_groups\".\"qty\" >= 0 AND \"size_groups\".\"qty\" <= 100000)"
+        },
+        "group_price_valid": {
+          "name": "group_price_valid",
+          "value": "\"size_groups\".\"price\" IS NULL OR (\"size_groups\".\"price\" >= 0 AND \"size_groups\".\"price\" <= 1000000000)"
+        }
+      }
+    },
+    "stock_history": {
+      "name": "stock_history",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "before_qty": {
+          "name": "before_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "after_qty": {
+          "name": "after_qty",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "before_revision": {
+          "name": "before_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "after_revision": {
+          "name": "after_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actor": {
+          "name": "actor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "undo_of": {
+          "name": "undo_of",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_history_product_time": {
+          "name": "idx_history_product_time",
+          "columns": [
+            "product_id",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "idx_history_undo": {
+          "name": "idx_history_undo",
+          "columns": [
+            "undo_of"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "stock_history_group_id_size_groups_id_fk": {
+          "name": "stock_history_group_id_size_groups_id_fk",
+          "tableFrom": "stock_history",
+          "tableTo": "size_groups",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "stock_history_product_id_products_id_fk": {
+          "name": "stock_history_product_id_products_id_fk",
+          "tableFrom": "stock_history",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

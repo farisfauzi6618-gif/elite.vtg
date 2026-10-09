@@ -1,2 +1,2 @@
-import OrderForm from "./order-form";
-export default function Home(){return <OrderForm/>;}
+import Catalog from './catalog';
+export default function Home() { return <Catalog />; }

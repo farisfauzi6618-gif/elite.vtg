@@ -1,7 +1,20 @@
-import { api,json,owner,settings,db,ready,publicOrder } from "@/lib/order-server";
-import { shipment,shipmentSummary } from "@/lib/fulfilment";
-import { ensureTelegramWebhook } from "@/lib/telegram-actions";
-import { catalogHealth } from "@/lib/catalog-bridge";
-import { paymentConfig } from "@/lib/payment-config";
-export const GET=()=>api(async()=>{await owner();const s=await settings();let webhookError:string|undefined;if(s?.bot_cipher&&s.chat_id&&!s.webhook_active){try{await ensureTelegramWebhook(s);}catch(e){webhookError=e instanceof Error?e.message:"Konfirmasi Telegram belum aktif.";}}
-const rows=await db().prepare("SELECT payment_method,id,created_at,name,phone,address,postcode,item,quantity,items_json,total,item_amount,shipping_amount,status,notify_status,payment_state,confirmed_at,catalog_checkout_id,catalog_items_json,stock_sync_state,stock_sync_error,proof_key IS NOT NULL AS has_proof,shipping_json FROM orders WHERE proof_key IS NOT NULL ORDER BY created_at DESC LIMIT 100").all<import("@/lib/order-types").Order & {has_proof:number}>();const orders=await Promise.all(rows.results.map(async o=>({...publicOrder(o),has_proof:o.has_proof,payment_state:o.confirmed_at?"payment_confirmed":"proof_received",confirmed_at:o.confirmed_at,stock_sync_state:o.stock_sync_state,stock_sync_error:o.stock_sync_error,shipment:shipmentSummary(await shipment(o.id))})));const payment=await paymentConfig();return json({payment,merchant:payment.qris?.merchant,qris:!!payment.qris,bot:s?.bot_username,chat:s?.chat_name,ready:await ready(s,payment),catalogConnected:await catalogHealth(),webhookError,orders});});
+import {readTaxonomy} from '@/lib/taxonomy-service';
+import { boundary, requireAdmin, requireOwner, readJson, response, readProducts, readProduct, readHistory, db, AppError, textValue } from '@/lib/server';
+import { instagramConfig } from '@/lib/instagram';
+import { createManualDraft, saveProduct, changeStock, undoStock } from '@/lib/catalog-service';
+export const dynamic='force-dynamic';
+export async function GET(request:Request){return boundary(async()=>{await requireAdmin(request);const q=new URL(request.url).searchParams;
+ if(q.has('id')){const p=await readProduct(q.get('id')!);return response({product:p,history:await readHistory(p.id)})}
+ if(q.get('view')==='connection'){await requireOwner();const last=await db().prepare('SELECT source,caption_status,photo_status,parse_status,message,instagram_url,created_at FROM import_attempts ORDER BY rowid DESC LIMIT 10').all();return response({config:instagramConfig(),attempts:last.results})}
+ return response({products:await readProducts(true),taxonomy:await readTaxonomy()});
+})}
+export async function POST(request:Request){return boundary(async()=>{const user=await requireAdmin(request);const data=await readJson(request);if(!data||typeof data!=='object')throw new AppError(400,'Data formulir tidak valid.');switch(data.op){
+ case 'create':return response(await createManualDraft(data));
+ case 'manualImport':
+ case 'instagramImport':throw new AppError(410,'Impor caption dan Instagram sudah dihapus. Tambahkan barang melalui formulir manual.');
+ case 'save':return response({product:await saveProduct(data,user.userId),history:await readHistory(textValue(data.id,100))});
+ case 'stock':{const result=await changeStock(data,user.userId);return response({...result,history:await readHistory(result.product.id)})}
+ case 'undo':{const p=await undoStock(data,user.userId);return response({product:p,history:await readHistory(p.id)})}
+ case 'checkInstagram':await requireOwner();throw new AppError(410,'Koneksi impor Instagram sudah dinonaktifkan. Gunakan formulir barang manual.');
+ default:throw new AppError(400,'Aksi tidak dikenal.');
+ }})}

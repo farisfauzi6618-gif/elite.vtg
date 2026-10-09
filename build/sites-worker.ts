@@ -27,10 +27,10 @@ export default {
     const secured = new Response(response.body, response);
     secured.headers.set("X-Content-Type-Options", "nosniff");
     secured.headers.set("Referrer-Policy", "no-referrer");
-    // Protect checkout and admin from another site overlaying payment controls.
-    secured.headers.set("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'");
-    secured.headers.set("X-Frame-Options", "DENY");
-    if (new URL(request.url).pathname === "/admin" || new URL(request.url).pathname.startsWith("/admin/")) {
+    // Admin pages must never be overlaid by a third-party iframe.
+    if (new URL(request.url).pathname === "/akses-tim" || new URL(request.url).pathname === "/admin" || new URL(request.url).pathname.startsWith("/admin/")) {
+      secured.headers.set("Content-Security-Policy", "frame-ancestors 'none'; object-src 'none'; base-uri 'self'");
+      secured.headers.set("X-Frame-Options", "DENY");
       secured.headers.set("Cache-Control", "private, no-store");
     }
     return secured;
